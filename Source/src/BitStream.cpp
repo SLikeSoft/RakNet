@@ -486,58 +486,74 @@ void BitStream::SetData( unsigned char *inByteArray )
 void BitStream::WriteCompressed( const unsigned char* inByteArray,
 								const unsigned int size, const bool unsignedData )
 {
-	BitSize_t currentByte = ( size >> 3 ) - 1; // PCs
+	BitSize_t currentByte;
 
-	unsigned char byteMatch;
-
-	if ( unsignedData )
-	{
-		byteMatch = 0;
-	}
-
-	else
-	{
-		byteMatch = 0xFF;
-	}
+	unsigned char byteMatch = unsignedData ? 0 : 0xFF;
 
 	// Write upper bytes with a single 1
-	// From high byte to low byte, if high byte is a byteMatch then write a 1 bit. Otherwise write a 0 bit and then write the remaining bytes
-	while ( currentByte > 0 )
+	// From high byte to low byte, if high byte is a byteMatch then write a 1 bit. 
+	// Otherwise write a 0 bit and then write the remaining bytes
+	if (!IsNetworkOrder)
 	{
-		if ( inByteArray[ currentByte ] == byteMatch )   // If high byte is byteMatch (0 of 0xff) then it would have the same value shifted
+		// get the highest byte with highest index  PCs
+		currentByte = (size >> 3) - 1;
+		while (currentByte > 0)
 		{
-			bool b = true;
-			Write( b );
+			if (inByteArray[currentByte] == byteMatch)   // If high byte is byteMatch (0 of 0xff) then it would have the same value shifted
+			{
+				Write(true);
+				currByte--；
+			}
+			else 
+			{
+				// Write the remainder of the data after writing 0
+				Write(false);
+				// Write the remainings 
+				WriteBits(inByteArray, (currentByte + 1) << 3, true);
+				return;
+			}
 		}
-		else
+
+		// make sure we are now on the lowest byte (index 0)
+		if (currentByte > 0)
+			return false;
+	}
+	else
+	{
+		// get the highest byte with highest index  PCs
+		currentByte = 0;
+		while (currentByte > ((size >> 3) - 1))
 		{
-			// Write the remainder of the data after writing 0
-			bool b = false;
-			Write( b );
-
-			WriteBits( inByteArray, ( currentByte + 1 ) << 3, true );
-			//  currentByte--;
-
-
-			return ;
+			if (inByteArray[currentByte] == byteMatch)   // If high byte is byteMatch (0 of 0xff) then it would have the same value shifted
+			{
+				Write(true);
+				currByte++；
+			}
+			else
+			{
+				// Write the remainder of the data after writing 0
+				Write(false);
+				// Write the remainings 
+				WriteBits(src + currentByte, size - (currentByte << 3));
+				return;
+			}
 		}
 
-		currentByte--;
+		// make sure we are now on the lowest byte (index highest)
+		if (currByte < ((size >> 3) - 1))
+			return false;
 	}
 
 	// If the upper half of the last byte is a 0 (positive) or 16 (negative) then write a 1 and the remaining 4 bits.  Otherwise write a 0 and the 8 bites.
-	if ( ( unsignedData && ( ( *( inByteArray + currentByte ) ) & 0xF0 ) == 0x00 ) ||
-		( unsignedData == false && ( ( *( inByteArray + currentByte ) ) & 0xF0 ) == 0xF0 ) )
+	if ((inByteArray[currentByte] & 0xF0) == 0x00 || (inByteArray[currentByte] & 0xF0) == 0xF0)
 	{
-		bool b = true;
-		Write( b );
+		Write( true );
 		WriteBits( inByteArray + currentByte, 4, true );
 	}
 
 	else
 	{
-		bool b = false;
-		Write( b );
+		Write( false );
 		WriteBits( inByteArray + currentByte, 8, true );
 	}
 }
@@ -614,7 +630,7 @@ bool BitStream::ReadBits( unsigned char *inOutByteArray, BitSize_t numberOfBitsT
 bool BitStream::ReadCompressed( unsigned char* inOutByteArray,
 							   const unsigned int size, const bool unsignedData )
 {
-	unsigned int currentByte = ( size >> 3 ) - 1;
+	unsigned int currentByte;
 
 
 	unsigned char byteMatch, halfByteMatch;
@@ -632,30 +648,71 @@ bool BitStream::ReadCompressed( unsigned char* inOutByteArray,
 	}
 
 	// Upper bytes are specified with a single 1 if they match byteMatch
-	// From high byte to low byte, if high byte is a byteMatch then write a 1 bit. Otherwise write a 0 bit and then write the remaining bytes
-	while ( currentByte > 0 )
+	// From high byte to low byte, if high byte is a byteMatch then write a 1 bit. 
+	// Otherwise write a 0 bit and then write the remaining bytes
+	if (!IsNetworkOrder())
 	{
-		// If we read a 1 then the data is byteMatch.
-
-		bool b;
-
-		if ( Read( b ) == false )
-			return false;
-
-		if ( b )   // Check that bit
+		currentByte = (size >> 3) - 1;
+		while (currentByte > 0)
 		{
-			inOutByteArray[ currentByte ] = byteMatch;
-			currentByte--;
-		}
-		else
-		{
-			// Read the rest of the bytes
+			// If we read a 1 then the data is byteMatch.
 
-			if ( ReadBits( inOutByteArray, ( currentByte + 1 ) << 3 ) == false )
+			bool b;
+
+			if (Read(b) == false)
 				return false;
 
-			return true;
+			if (b)   // Check that bit
+			{
+				inOutByteArray[currentByte] = byteMatch;
+				currentByte--;
+			}
+			else
+			{
+				// Read the rest of the bytes
+
+				if (ReadBits(inOutByteArray, (currentByte + 1) << 3) == false)
+					return false;
+
+				return true;
+			}
 		}
+
+		// make sure we are now on the lowest byte (index of 0)
+		if (currentByte > 0)
+			return false;
+	}
+	else
+	{
+		currentByte = 0;
+		while (currentByte <((size >>3 )-1))
+		{
+			// If we read a 1 then the data is byteMatch.
+
+			bool b;
+
+			if (Read(b) == false)
+				return false;
+
+			if (b)   // Check that bit
+			{
+				inOutByteArray[currentByte] = byteMatch;
+				currentByte++;
+			}
+			else
+			{
+				// Read the rest of the bytes
+
+				if (ReadBits(inOutByteArray, size - (currentByte << 3) == false)
+					return false;
+
+				return true;
+			}
+		}
+
+		// make sure we are now on the highest byte (index of (size >>3 )-1))
+		if (currentByte < (size >> 3) - 1))
+			return false;
 	}
 
 	// All but the first bytes are byteMatch.  If the upper half of the last byte is a 0 (positive) or 16 (negative) then what we read will be a 1 and the remaining 4 bits.
