@@ -614,7 +614,7 @@ bool BitStream::ReadBits( unsigned char *inOutByteArray, BitSize_t numberOfBitsT
 bool BitStream::ReadCompressed( unsigned char* inOutByteArray,
 							   const unsigned int size, const bool unsignedData )
 {
-	unsigned int currentByte = ( size >> 3 ) - 1;
+	unsigned int currentByte;
 
 
 	unsigned char byteMatch, halfByteMatch;
@@ -632,29 +632,62 @@ bool BitStream::ReadCompressed( unsigned char* inOutByteArray,
 	}
 
 	// Upper bytes are specified with a single 1 if they match byteMatch
-	// From high byte to low byte, if high byte is a byteMatch then write a 1 bit. Otherwise write a 0 bit and then write the remaining bytes
-	while ( currentByte > 0 )
+	// From high byte to low byte, if high byte is a byteMatch then write a 1 bit. 
+	// Otherwise write a 0 bit and then write the remaining bytes
+	if (!IsNetworkOrder())
 	{
-		// If we read a 1 then the data is byteMatch.
-
-		bool b;
-
-		if ( Read( b ) == false )
-			return false;
-
-		if ( b )   // Check that bit
+		currentByte = (size >> 3) - 1;
+		while (currentByte > 0)
 		{
-			inOutByteArray[ currentByte ] = byteMatch;
-			currentByte--;
-		}
-		else
-		{
-			// Read the rest of the bytes
+			// If we read a 1 then the data is byteMatch.
 
-			if ( ReadBits( inOutByteArray, ( currentByte + 1 ) << 3 ) == false )
+			bool b;
+
+			if (Read(b) == false)
 				return false;
 
-			return true;
+			if (b)   // Check that bit
+			{
+				inOutByteArray[currentByte] = byteMatch;
+				currentByte--;
+			}
+			else
+			{
+				// Read the rest of the bytes
+
+				if (ReadBits(inOutByteArray, (currentByte + 1) << 3) == false)
+					return false;
+
+				return true;
+			}
+		}
+	}
+	else
+	{
+		currentByte = 0;
+		while (currentByte <((size >>3 )-1))
+		{
+			// If we read a 1 then the data is byteMatch.
+
+			bool b;
+
+			if (Read(b) == false)
+				return false;
+
+			if (b)   // Check that bit
+			{
+				inOutByteArray[currentByte] = byteMatch;
+				currentByte++;
+			}
+			else
+			{
+				// Read the rest of the bytes
+
+				if (ReadBits(inOutByteArray, size - (currentByte << 3) == false)
+					return false;
+
+				return true;
+			}
 		}
 	}
 
