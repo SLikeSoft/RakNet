@@ -24,8 +24,8 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
-#include <IPHlpApi.h> // used for GetAdaptersAddresses()
-#pragma comment(lib, "IPHLPAPI.lib") // used for GetAdaptersAddresses()
+#include <iphlpapi.h> // used for GetAdaptersAddresses()
+#pragma comment(lib, "iphlpapi.lib") // used for GetAdaptersAddresses()
 
 // Must always include Winsock2.h before windows.h
 // or else:
