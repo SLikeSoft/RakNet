@@ -519,6 +519,9 @@ void UDPForwarder::UpdateUDPForwarder(void)
 					}
 				}
 
+				// Release address info after we have used it
+				freeaddrinfo(servinfo);
+
 				if (fe->socket==INVALID_SOCKET)
 					sfos.result=UDPFORWARDER_BIND_FAILED;
 				else
