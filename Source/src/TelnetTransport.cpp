@@ -93,7 +93,7 @@ void TelnetTransport::Send(  SystemAddress systemAddress, const char *data,... )
 	{
 		size_t length = strlen(text);
 		size_t availableChars = REMOTE_MAX_TEXT_INPUT-length-1;
-		strncat_s(text, sendSuffix, availableChars);
+		strncat_s(text, sizeof(text), sendSuffix, availableChars);
 	}
 
 	tcpInterface->Send(text, (unsigned int) strlen(text), systemAddress, false);

@@ -28,6 +28,10 @@ set(SLikeNet_VERSION_PATCH "0")
 set(SLikeNet_VERSION ${SLikeNet_VERSION_MAJOR}.${SLikeNet_VERSION_MINOR}.${SLikeNet_VERSION_PATCH})
 set(SLikeNet_API_VERSION ${SLikeNet_VERSION_MAJOR}.${SLikeNet_VERSION_MINOR})
 
+if(MINGW)
+	add_compile_definitions(_RAKNET_SUPPORT_TwoWayAuthentication=0)
+endif()
+
 # explicitly enable @rpath in the install name for any shared library being built (for cmake >=2.8.12 and <3.0 - it's enabled by default for >= 3.0)
 # note that for cmake < 2.8.12 we do not use rpath but rather keep the RakNet 4.082 behavior
 if( CMAKE_VERSION VERSION_LESS 3.0 )

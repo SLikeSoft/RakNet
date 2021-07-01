@@ -42,7 +42,9 @@ add_definitions(-D_RETAIL)
 
 IF(WIN32 AND NOT UNIX)
 	add_definitions(-DWIN32 -D_RAKNET_DLL -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_SECURE_NO_DEPRECATE)
-	SET( CMAKE_CXX_FLAGS "/GS- /GR-" )
+	IF(MSVC)
+		SET( CMAKE_CXX_FLAGS "/GS- /GR-" )
+	ENDIF()
 ELSE(WIN32 AND NOT UNIX)
 	set_target_properties(SLikeNetLibStatic PROPERTIES
 		OUTPUT_NAME "slikenet"
