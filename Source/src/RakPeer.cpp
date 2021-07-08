@@ -2582,17 +2582,18 @@ int RakPeer::GetMTUSize( const SystemAddress target ) const
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 unsigned int RakPeer::GetNumberOfAddresses( void )
 {
-	if (IsActive() == false) {
+
+	if (IsActive()==false)
+	{
 		FillIPList();
 	}
 
-	for (unsigned int i = 0; i < MAXIMUM_NUMBER_OF_INTERNAL_IDS && ipList[i] != UNASSIGNED_SYSTEM_ADDRESS; i++) {
-		if (ipList[i] == UNASSIGNED_SYSTEM_ADDRESS) {
-			return i; // first unassigned address entry found -> end of address list reached
-		}
-	}
+	int i = 0;
 
-	return MAXIMUM_NUMBER_OF_INTERNAL_IDS;
+	while (i < MAXIMUM_NUMBER_OF_INTERNAL_IDS && ipList[i] != UNASSIGNED_SYSTEM_ADDRESS)
+		i++;
+
+	return i;
 }
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -6518,4 +6519,3 @@ void RakPeer::FillIPList(void)
 // #pragma pop_macro("new")
 // #undef RMO_NEW_UNDEF_ALLOCATING_QUEUE
 // #endif
-
